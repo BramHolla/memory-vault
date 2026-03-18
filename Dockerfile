@@ -7,7 +7,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Web app only — sync/ and scripts/ are local tools, not needed in production
 # Media is stored in R2; secrets are managed via Fly.io
-COPY app.py db.py config.py users_db.py mailer.py ./
+COPY app.py db.py config.py users_db.py mailer.py translations.py ./
 COPY templates/ templates/
 COPY static/ static/
 

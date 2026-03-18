@@ -26,8 +26,16 @@
       <span class="text-gray-500 text-sm">/ Admin</span>
     </div>
     <div class="flex items-center gap-3">
-      <a href="/" class="text-sm text-gray-400 hover:text-white transition">← Back to gallery</a>
-      <a href="/logout" class="text-sm text-gray-400 hover:text-white transition">Sign out</a>
+      <a href="/" class="text-sm text-gray-400 hover:text-white transition">{{ t.back_to_gallery }}</a>
+      <!-- Language toggle -->
+      <form method="POST" action="/set-language">
+        <input type="hidden" name="lang" value="{{ 'nl' if user_lang == 'en' else 'en' }}">
+        <button type="submit"
+          class="text-sm text-gray-400 hover:text-snap-yellow transition">
+          {{ t.lang_switch_label }}
+        </button>
+      </form>
+      <a href="/logout" class="text-sm text-gray-400 hover:text-white transition">{{ t.sign_out }}</a>
     </div>
   </header>
 
@@ -35,10 +43,10 @@
 
     <!-- Users table -->
     <div class="flex items-center justify-between mb-4">
-      <h2 class="text-lg font-semibold">Users ({{ users|length }})</h2>
+      <h2 class="text-lg font-semibold">{{ t.users_count }} ({{ users|length }})</h2>
       <button onclick="document.getElementById('add-user-modal').classList.remove('hidden')"
         class="bg-snap-yellow text-black text-sm font-semibold px-4 py-2 rounded-lg hover:bg-yellow-300 transition">
-        + Add user
+        {{ t.add_user }}
       </button>
     </div>
 
@@ -46,13 +54,13 @@
       <table class="w-full text-sm">
         <thead>
           <tr class="border-b border-gray-800 text-gray-400 text-xs uppercase tracking-wide">
-            <th class="px-4 py-3 text-left">ID</th>
-            <th class="px-4 py-3 text-left">Email</th>
-            <th class="px-4 py-3 text-left">Memories</th>
-            <th class="px-4 py-3 text-left">Last sync</th>
+            <th class="px-4 py-3 text-left">{{ t.col_id }}</th>
+            <th class="px-4 py-3 text-left">{{ t.col_email }}</th>
+            <th class="px-4 py-3 text-left">{{ t.col_memories }}</th>
+            <th class="px-4 py-3 text-left">{{ t.col_last_sync }}</th>
             <th class="px-4 py-3 text-left">API key</th>
             <th class="px-4 py-3 text-left">Admin</th>
-            <th class="px-4 py-3 text-left">Actions</th>
+            <th class="px-4 py-3 text-left">{{ t.col_actions }}</th>
           </tr>
         </thead>
         <tbody>
@@ -65,8 +73,8 @@
             <td class="px-4 py-3">
               <div class="flex items-center gap-2">
                 <code class="text-xs text-gray-500 font-mono" id="key-{{ u.id }}">{{ u.api_key[:12] }}…</code>
-                <button onclick="copyKey('{{ u.api_key }}', 'key-{{ u.id }}')"
-                  class="text-xs text-gray-400 hover:text-white transition">Copy</button>
+                <button onclick="copyKey('{{ u.api_key }}', 'key-{{ u.id }}', '{{ t.copied }}')"
+                  class="text-xs text-gray-400 hover:text-white transition">{{ t.copy }}</button>
               </div>
             </td>
             <td class="px-4 py-3 text-gray-400">{{ '✓' if u.is_admin else '' }}</td>
@@ -74,16 +82,16 @@
               <div class="flex items-center gap-2">
                 <form method="POST" action="/admin/users/{{ u.id }}/rotate-key"
                       onsubmit="return confirm('Generate new API key for {{ u.id }}?')">
-                  <button class="text-xs text-blue-400 hover:text-blue-300 transition">New key</button>
+                  <button class="text-xs text-blue-400 hover:text-blue-300 transition">{{ t.new_key }}</button>
                 </form>
                 <form method="POST" action="/admin/users/{{ u.id }}/reset-password"
                       onsubmit="return confirm('Send password reset email to {{ u.email }}?')">
-                  <button class="text-xs text-yellow-400 hover:text-yellow-300 transition">Reset password</button>
+                  <button class="text-xs text-yellow-400 hover:text-yellow-300 transition">{{ t.reset_password }}</button>
                 </form>
                 {% if u.id != current_user.id %}
                 <form method="POST" action="/admin/users/{{ u.id }}/delete"
                       onsubmit="return confirm('Delete user {{ u.id }} and all their data? This cannot be undone.')">
-                  <button class="text-xs text-red-400 hover:text-red-300 transition">Delete</button>
+                  <button class="text-xs text-red-400 hover:text-red-300 transition">{{ t.delete }}</button>
                 </form>
                 {% endif %}
               </div>
@@ -91,7 +99,7 @@
           </tr>
           {% else %}
           <tr>
-            <td colspan="7" class="px-4 py-8 text-center text-gray-500">No users found.</td>
+            <td colspan="7" class="px-4 py-8 text-center text-gray-500">{{ t.no_users }}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -100,7 +108,7 @@
 
     <!-- Sync instructions -->
     <div class="mt-8 bg-gray-900 rounded-xl border border-gray-800 p-5">
-      <h3 class="font-semibold mb-3 text-gray-200">Sync instructions for users</h3>
+      <h3 class="font-semibold mb-3 text-gray-200">{{ t.sync_instructions }}</h3>
       <p class="text-sm text-gray-400 mb-2">Share the following steps and their personal API key:</p>
       <ol class="text-sm text-gray-400 list-decimal list-inside space-y-1">
         <li>Download <code class="text-gray-300">sync.exe</code> via the shared link.</li>
@@ -114,7 +122,7 @@
   <!-- Modal: add user -->
   <div id="add-user-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
     <div class="bg-gray-900 rounded-xl border border-gray-800 p-6 w-full max-w-sm shadow-2xl">
-      <h3 class="font-semibold text-lg mb-5">Add user</h3>
+      <h3 class="font-semibold text-lg mb-5">{{ t.add_user_modal_title }}</h3>
       <form method="POST" action="/admin/users">
 
         <label class="block text-sm text-gray-400 mb-1">ID (slug, e.g. annav)</label>
@@ -130,23 +138,23 @@
           placeholder="name@example.com">
 
         <p class="text-xs text-gray-500 mb-4 bg-gray-800/60 rounded-lg px-3 py-2">
-          The user will receive an invitation email to set their own password.
+          {{ t.invite_hint }}
         </p>
 
         <label class="flex items-center gap-2 text-sm text-gray-400 mb-5 cursor-pointer">
           <input type="checkbox" name="is_admin" value="1" class="rounded">
-          Admin privileges
+          {{ t.admin_privileges }}
         </label>
 
         <div class="flex gap-3">
           <button type="submit"
             class="flex-1 bg-snap-yellow text-black font-semibold rounded-lg py-2 text-sm hover:bg-yellow-300 transition">
-            Create & send invite
+            {{ t.create_send_invite }}
           </button>
           <button type="button"
             onclick="document.getElementById('add-user-modal').classList.add('hidden')"
             class="flex-1 bg-gray-800 text-gray-300 font-semibold rounded-lg py-2 text-sm hover:bg-gray-700 transition">
-            Cancel
+            {{ t.cancel }}
           </button>
         </div>
       </form>
@@ -154,11 +162,11 @@
   </div>
 
   <script>
-    function copyKey(fullKey, elemId) {
+    function copyKey(fullKey, elemId, copiedLabel) {
       navigator.clipboard.writeText(fullKey).then(() => {
         const el = document.getElementById(elemId);
         const orig = el.textContent;
-        el.textContent = 'Copied!';
+        el.textContent = copiedLabel;
         el.classList.add('text-snap-yellow');
         setTimeout(() => {
           el.textContent = orig;

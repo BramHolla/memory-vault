@@ -14,6 +14,7 @@ A self-hosted, multi-user web gallery for your Snapchat memories. Browse, filter
 - **Filters** — date range, year, month, media type (photo/video), location radius
 - **Map view** — memories plotted on an interactive Leaflet map with clustering
 - **Multi-user** — admin panel to invite users, reset passwords, rotate API keys
+- **Per-user language** — each user can switch the UI between English and Dutch
 - **Sync tool** — a standalone `sync.exe` that processes your Snapchat export ZIP and uploads everything to R2
 - **Dark theme** with Snapchat yellow accents
 
@@ -110,6 +111,14 @@ Open http://localhost:5000
 
 ---
 
+## Demo mode
+
+Visit `/?demo=true` to see the gallery with placeholder images (from [picsum.photos](https://picsum.photos)) instead of your real photos. Useful for screenshots, demos, or sharing the UI without exposing personal content.
+
+A small banner appears at the bottom of the screen while demo mode is active.
+
+---
+
 ## Sync Tool
 
 The sync tool (`sync.py` / `sync.exe`) processes your Snapchat data export and uploads it to R2.
@@ -157,6 +166,18 @@ sync.exe --api-key sk_YOUR_KEY path\to\mydata~*.zip
 | `R2_PUBLIC_URL` | Public base URL of the R2 bucket |
 | `GMAIL_USER` | Gmail address for sending invite/reset emails |
 | `GMAIL_APP_PASSWORD` | Gmail App Password (not your login password) |
+
+---
+
+## Contributing
+
+Contributions are welcome! Whether it's a bug fix, a new feature, or an improvement to the docs — feel free to open a pull request.
+
+1. Fork the repo and create a branch (`git checkout -b feature/your-idea`)
+2. Make your changes and test locally (`python app.py`)
+3. Open a pull request with a clear description of what you changed and why
+
+If you have an idea but don't want to code it yourself, open an issue and let's discuss it.
 
 ---
 

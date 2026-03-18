@@ -13,7 +13,7 @@ const state = {
   monthDayFrom:   null,   // "MM-DD" cross-year filter
   monthDayTo:     null,
   monthFilter:    null,   // "MM" cross-year month filter
-  yearFilter:     null,   // integer, specifiek jaar
+  yearFilter:     null,   // integer, specific year
   availableYears: [],     // [2019, 2020, ..., 2026] ascending
   locLat:         null,
   locLon:         null,
@@ -40,8 +40,11 @@ async function loadStats() {
   const data = await api("/api/stats");
   const el = document.getElementById("stats-badge");
   if (el) {
-    el.textContent =
-      `${data.total} herinneringen  •  ${data.images} foto's  •  ${data.videos} video's`;
+    const tpl = window.STATS_BADGE_TPL || "{total} memories  •  {images} photos  •  {videos} videos";
+    el.textContent = tpl
+      .replace("{total}",  data.total)
+      .replace("{images}", data.images)
+      .replace("{videos}", data.videos);
     el.classList.remove("hidden");
   }
 }
@@ -92,7 +95,7 @@ function setYearFromSelect() {
 }
 
 function navYear(dir) {
-  // dir: -1 = ouder jaar, +1 = nieuwer jaar
+  // dir: -1 = older year, +1 = newer year
   const years = state.availableYears;
   if (!years.length) return;
   if (state.yearFilter === null) {
@@ -174,7 +177,7 @@ function setQuickDate(range) {
   document.querySelectorAll(".quick-btn").forEach(b => b.classList.remove("active"));
   event.target.classList.add("active");
 
-  // Reset date pickers en cross-year state
+  // Reset date pickers and cross-year state
   state.dateFrom     = "";
   state.dateTo       = "";
   state.monthDayFrom = null;
@@ -191,11 +194,11 @@ function setQuickDate(range) {
   const dd = String(now.getDate()).padStart(2, "0");
 
   if (range === "today") {
-    // Dezelfde dag in alle jaren: bijv. "03-18"
+    // Same day across all years, e.g. "03-18"
     state.monthDayFrom = `${mm}-${dd}`;
     state.monthDayTo   = `${mm}-${dd}`;
   } else if (range === "week") {
-    // Dezelfde week-periode in alle jaren
+    // Same week window across all years
     const weekAgo = new Date(now);
     weekAgo.setDate(weekAgo.getDate() - 6);
     const wmm = String(weekAgo.getMonth() + 1).padStart(2, "0");
@@ -203,7 +206,7 @@ function setQuickDate(range) {
     state.monthDayFrom = `${wmm}-${wdd}`;
     state.monthDayTo   = `${mm}-${dd}`;
   } else if (range === "month") {
-    // Dezelfde maand in alle jaren
+    // Same month across all years
     state.monthFilter = mm;
   } else if (range === "year") {
     // Dit jaar (exacte jaarfilter)
@@ -263,7 +266,7 @@ async function loadPage() {
     renderItems(items, startIndex);
     state.page++;
   } catch (e) {
-    console.error("Fout bij laden:", e);
+    console.error("Error loading memories:", e);
   } finally {
     state.loading = false;
     loadingEl.classList.add("hidden");
@@ -279,20 +282,24 @@ function renderItems(items, startIndex) {
     div.dataset.index = idx;
     div.onclick = () => openLightbox(idx);
 
+    const demoSrc = window.DEMO_MODE
+      ? `https://picsum.photos/seed/${mem.id}/400/400`
+      : null;
+
     if (mem.media_type === "video") {
-      if (mem.poster) {
+      if (demoSrc || mem.poster) {
         const img = document.createElement("img");
-        img.src = `${window.MEDIA_BASE}/${mem.poster}`;
+        img.src = demoSrc || `${window.MEDIA_BASE}/${mem.poster}`;
         img.loading = "lazy";
         img.alt = "";
         div.appendChild(img);
       } else {
-        // Geen poster: toon donkere placeholder (voorkomt blauwe browser-default)
+        // No poster: dark placeholder (avoids blue browser default)
         const placeholder = document.createElement("div");
         placeholder.style.cssText = "width:100%;height:100%;background:#1a1a2e;";
         div.appendChild(placeholder);
       }
-      // Altijd zichtbaar gecentreerd play-icoon
+      // Always-visible centered play icon
       div.insertAdjacentHTML("beforeend", `
         <div class="play-overlay">
           <div class="play-circle">
@@ -303,7 +310,7 @@ function renderItems(items, startIndex) {
         </div>`);
     } else {
       const img = document.createElement("img");
-      img.src = `${window.MEDIA_BASE}/${mem.filename}`;
+      img.src = demoSrc || `${window.MEDIA_BASE}/${mem.filename}`;
       img.loading = "lazy";
       img.alt = "";
       div.appendChild(img);
@@ -335,16 +342,20 @@ function renderItems(items, startIndex) {
   });
 }
 
+function _locale() {
+  return (window.UI_LOCALE === "nl") ? "nl-NL" : "en-GB";
+}
+
 function formatDate(iso) {
   if (!iso) return "";
   const d = new Date(iso);
-  return d.toLocaleDateString("nl-NL", { day: "2-digit", month: "short", year: "numeric" });
+  return d.toLocaleDateString(_locale(), { day: "2-digit", month: "short", year: "numeric" });
 }
 
 function formatDateFull(iso) {
   if (!iso) return "";
   const d = new Date(iso);
-  return d.toLocaleString("nl-NL", {
+  return d.toLocaleString(_locale(), {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
     hour: "2-digit", minute: "2-digit"
   });
@@ -389,7 +400,12 @@ function renderLightbox() {
   const content = document.getElementById("lb-content");
   content.innerHTML = "";
 
-  if (mem.media_type === "video") {
+  if (window.DEMO_MODE) {
+    const img = document.createElement("img");
+    img.src = `https://picsum.photos/seed/${mem.id}/800/800`;
+    img.alt = "";
+    content.appendChild(img);
+  } else if (mem.media_type === "video") {
     const video = document.createElement("video");
     video.src = `${window.MEDIA_BASE}/${mem.filename}`;
     video.controls = true;
@@ -407,7 +423,7 @@ function renderLightbox() {
   if (mem.latitude) info += ` · ${mem.latitude.toFixed(4)}, ${mem.longitude.toFixed(4)}`;
   infoEl.textContent = info;
 
-  // Download-link bijwerken
+  // Update download link
   const dlBtn = document.getElementById("lb-download");
   if (dlBtn) {
     dlBtn.href = `${window.MEDIA_BASE}/${mem.filename}`;

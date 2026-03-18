@@ -76,7 +76,8 @@ _SCHEMA = """
         invite_token    TEXT,
         invite_expires  TEXT,
         reset_token     TEXT,
-        reset_expires   TEXT
+        reset_expires   TEXT,
+        language        TEXT DEFAULT 'en'
     );
 """
 
@@ -98,6 +99,7 @@ def _get_conn(path: Path) -> sqlite3.Connection:
         ("invite_expires", "TEXT"),
         ("reset_token",    "TEXT"),
         ("reset_expires",  "TEXT"),
+        ("language",       "TEXT DEFAULT 'en'"),
     ]:
         try:
             conn.execute(f"ALTER TABLE users ADD COLUMN {col} {defn}")
@@ -232,6 +234,14 @@ def delete_user(path: Path, user_id: str):
     conn = _get_conn(path)
     with conn:
         conn.execute("DELETE FROM users WHERE id = ?", (user_id.lower(),))
+    conn.close()
+
+
+def set_language(path: Path, user_id: str, language: str):
+    """Set the UI language ('en' or 'nl') for a user."""
+    conn = _get_conn(path)
+    with conn:
+        conn.execute("UPDATE users SET language = ? WHERE id = ?", (language, user_id.lower()))
     conn.close()
 
 

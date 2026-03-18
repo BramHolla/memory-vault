@@ -45,9 +45,9 @@
 
       <!-- Media type filter -->
       <div class="flex rounded-lg overflow-hidden border border-gray-700 text-sm">
-        <button onclick="setMediaType('')"   id="btn-all"   class="type-btn active px-3 py-1.5">All</button>
-        <button onclick="setMediaType('image')"  id="btn-image" class="type-btn px-3 py-1.5">Photos</button>
-        <button onclick="setMediaType('video')"  id="btn-video" class="type-btn px-3 py-1.5">Videos</button>
+        <button onclick="setMediaType('')"       id="btn-all"   class="type-btn active px-3 py-1.5">{{ t.filter_all }}</button>
+        <button onclick="setMediaType('image')"  id="btn-image" class="type-btn px-3 py-1.5">{{ t.filter_photos }}</button>
+        <button onclick="setMediaType('video')"  id="btn-video" class="type-btn px-3 py-1.5">{{ t.filter_videos }}</button>
       </div>
 
       <!-- Date from -->
@@ -63,14 +63,14 @@
       <!-- Clear filters -->
       <button onclick="clearFilters()"
         class="text-xs text-gray-400 hover:text-white px-2 py-1.5 rounded-lg hover:bg-gray-800 transition">
-        Clear filters
+        {{ t.clear_filters }}
       </button>
 
       <!-- Map toggle -->
       <button onclick="toggleMap()" id="map-toggle"
         class="bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg px-3 py-1.5 text-sm transition flex items-center gap-1.5">
         <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current"><path d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z"/></svg>
-        Map
+        {{ t.map_toggle }}
       </button>
 
       <!-- User menu -->
@@ -81,20 +81,28 @@
             Admin
           </a>
         {% endif %}
+        <!-- Language toggle -->
+        <form method="POST" action="/set-language">
+          <input type="hidden" name="lang" value="{{ 'nl' if user_lang == 'en' else 'en' }}">
+          <button type="submit"
+            class="text-xs text-gray-400 hover:text-snap-yellow px-2 py-1.5 rounded-lg hover:bg-gray-800 transition">
+            {{ t.lang_switch_label }}
+          </button>
+        </form>
         <span class="text-xs text-gray-500 hidden sm:block">{{ current_user.id }}</span>
         <a href="/logout"
           class="text-xs text-gray-400 hover:text-white px-2 py-1.5 rounded-lg hover:bg-gray-800 transition">
-          Sign out
+          {{ t.sign_out }}
         </a>
       </div>
     </div>
 
     <!-- Quick date filters + year dropdown -->
     <div class="flex gap-2 mt-2 flex-wrap items-center">
-      <span class="text-xs text-gray-500">Quick:</span>
-      <button onclick="setQuickDate('today')"     class="quick-btn">Today</button>
-      <button onclick="setQuickDate('week')"      class="quick-btn">This week</button>
-      <button onclick="setQuickDate('month')"     class="quick-btn">This month</button>
+      <span class="text-xs text-gray-500">{{ t.quick }}</span>
+      <button onclick="setQuickDate('today')"     class="quick-btn">{{ t.today }}</button>
+      <button onclick="setQuickDate('week')"      class="quick-btn">{{ t.this_week }}</button>
+      <button onclick="setQuickDate('month')"     class="quick-btn">{{ t.this_month }}</button>
 
       <span class="text-gray-700 text-xs hidden sm:block">|</span>
 
@@ -106,7 +114,7 @@
         </button>
         <select id="year-select" onchange="setYearFromSelect()"
           class="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm text-white focus:outline-none focus:border-snap-yellow">
-          <option value="">All years</option>
+          <option value="">{{ t.all_years }}</option>
         </select>
         <button id="year-next" onclick="navYear(1)"
           class="w-6 h-6 flex items-center justify-center rounded bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-400 hover:text-white transition disabled:opacity-30 disabled:cursor-not-allowed text-sm">
@@ -127,8 +135,8 @@
         <svg class="animate-spin w-6 h-6 mx-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="4" class="opacity-25"/><path d="M4 12a8 8 0 018-8" stroke-width="4" class="opacity-75"/></svg>
       </div>
       <div id="empty" class="text-center py-16 text-gray-500 hidden">
-        <p class="text-lg">No memories found</p>
-        <p class="text-sm mt-1">Adjust the filters to see more</p>
+        <p class="text-lg">{{ t.no_memories }}</p>
+        <p class="text-sm mt-1">{{ t.no_memories_hint }}</p>
       </div>
       <div id="sentinel" class="h-4"></div>
     </div>
@@ -169,10 +177,22 @@
     </button>
   </div>
 
+  <!-- Demo banner -->
+  {% if demo_mode %}
+  <div class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-snap-yellow text-black text-xs font-bold px-4 py-2 rounded-full shadow-lg pointer-events-none">
+    Demo mode — placeholder images
+  </div>
+  {% endif %}
+
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="/static/app.js"></script>
-  <script>window.MEDIA_BASE = "{{ media_base }}";</script>
+  <script>
+    window.MEDIA_BASE      = "{{ media_base }}";
+    window.DEMO_MODE       = {{ 'true' if demo_mode else 'false' }};
+    window.STATS_BADGE_TPL = {{ t.stats_badge | tojson }};
+    window.UI_LOCALE       = "{{ user_lang }}";
+  </script>
 </body>
 </html>

@@ -18,6 +18,7 @@ import config
 import db
 import mailer
 import users_db
+from translations import TRANSLATIONS
 
 app = Flask(__name__)
 app.secret_key = config.FLASK_SECRET_KEY
@@ -35,9 +36,16 @@ class User(UserMixin):
         self.id       = data["id"]
         self.email    = data["email"]
         self.is_admin = bool(data["is_admin"])
+        self.language = data.get("language") or "en"
 
     def get_id(self):
         return self.id
+
+
+def _get_t(user) -> dict:
+    """Return the translation dict for the current user's language."""
+    lang = getattr(user, "language", "en") or "en"
+    return TRANSLATIONS.get(lang, TRANSLATIONS["en"])
 
 
 @login_manager.user_loader
@@ -174,7 +182,9 @@ def logout():
 def index():
     _set_db_for_user(current_user.id)
     media_base = f"{config.R2_PUBLIC_URL}/users/{current_user.id}/media" if config.CLOUD_MODE else "/media"
-    return render_template("index.html", media_base=media_base)
+    demo_mode  = request.args.get("demo") == "true"
+    return render_template("index.html", media_base=media_base, demo_mode=demo_mode,
+                           t=_get_t(current_user), user_lang=current_user.language)
 
 
 # ---------------------------------------------------------------------------
@@ -286,6 +296,24 @@ def reset_password(token: str):
 
 
 # ---------------------------------------------------------------------------
+# Language preference
+# ---------------------------------------------------------------------------
+
+@app.route("/set-language", methods=["POST"])
+@login_required
+def set_language():
+    lang = request.form.get("lang", "en")
+    if lang not in ("en", "nl"):
+        lang = "en"
+    path = _get_users_db_path()
+    if path:
+        users_db.set_language(path, current_user.id, lang)
+        users_db.upload_users_db(path)
+        _invalidate_users_db_cache()
+    return redirect(request.referrer or url_for("index"))
+
+
+# ---------------------------------------------------------------------------
 # Admin
 # ---------------------------------------------------------------------------
 
@@ -332,7 +360,8 @@ def admin():
             except Exception:
                 pass
 
-    return render_template("admin.html", users=users)
+    return render_template("admin.html", users=users, t=_get_t(current_user),
+                           user_lang=current_user.language)
 
 
 @app.route("/admin/users", methods=["POST"])
