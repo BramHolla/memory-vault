@@ -21,6 +21,9 @@ import tempfile
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+# Allow imports from the project root (config, users_db, etc.)
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 import boto3
 from tqdm import tqdm
 

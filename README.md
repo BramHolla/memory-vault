@@ -24,7 +24,7 @@ A self-hosted, multi-user web gallery for your Snapchat memories. Browse, filter
 ```
 Snapchat export ZIP
        ↓
-  sync.exe (local)
+  sync/ (local CLI tool)
   - Reads memories_history.json
   - Downloads / extracts media
   - Writes EXIF / video metadata
@@ -96,10 +96,10 @@ fly deploy
 Use the migration script to bootstrap the first user:
 
 ```bash
-.venv\Scripts\python.exe migrate.py --user-id yourid --email you@example.com --admin
+.venv\Scripts\python.exe scripts/migrate.py --user-id yourid --email you@example.com --admin
 ```
 
-Or create the users.db manually and upload it to R2 (see `migrate.py` for reference).
+Or create the users.db manually and upload it to R2 (see `scripts/migrate.py` for reference).
 
 ### 6. Run locally (optional)
 
@@ -118,7 +118,7 @@ The sync tool (`sync.py` / `sync.exe`) processes your Snapchat data export and u
 
 ```powershell
 # With Python
-.venv\Scripts\python.exe sync.py --api-key sk_YOUR_KEY "C:\path\to\mydata~*.zip"
+.venv\Scripts\python.exe sync/sync.py --api-key sk_YOUR_KEY "C:\path\to\mydata~*.zip"
 
 # With pre-built binary
 sync.exe --api-key sk_YOUR_KEY path\to\mydata~*.zip
@@ -138,8 +138,9 @@ sync.exe --api-key sk_YOUR_KEY path\to\mydata~*.zip
 
 ```powershell
 .venv\Scripts\pip.exe install pyinstaller
-.venv\Scripts\pyinstaller.exe --onefile sync.py --name sync
+.venv\Scripts\pyinstaller.exe --onefile sync/sync.py --name sync --paths .
 # Output: dist\sync.exe
+# --paths . ensures PyInstaller can find config.py and users_db.py at the project root
 ```
 
 ---

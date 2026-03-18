@@ -3,7 +3,7 @@
 ## Sync new memories
 
 ```powershell
-.venv\Scripts\python.exe sync.py --api-key sk_YOUR_API_KEY_HERE "C:\path\to\mydata~*.zip"
+.venv\Scripts\python.exe sync/sync.py --api-key sk_YOUR_API_KEY_HERE "C:\path\to\mydata~*.zip"
 ```
 
 Automatically: processes the ZIP → sets user_id → uploads media to R2 → uploads database.
@@ -64,10 +64,11 @@ Manage users at: **https://your-app.fly.dev/admin**
 
 ```powershell
 .venv\Scripts\pip.exe install pyinstaller
-.venv\Scripts\pyinstaller.exe --onefile sync.py --name sync
+.venv\Scripts\pyinstaller.exe --onefile sync/sync.py --name sync --paths .
 ```
 
-Output is in `dist\sync.exe`. Only rebuild if `sync.py`, `config.py`, `users_db.py`, or `downloader.py` changes.
+Output is in `dist\sync.exe`. Only rebuild if `sync/sync.py`, `config.py`, `users_db.py`, or `sync/downloader.py` changes.
+`--paths .` ensures PyInstaller can find `config.py` and `users_db.py` at the project root.
 
 **Instructions for the user:**
 ```
@@ -89,10 +90,10 @@ Go to: http://localhost:5000
 
 ```powershell
 # Dry run (no deletions)
-.venv\Scripts\python.exe fix_move_media.py --user-id YOUR_USER_ID
+.venv\Scripts\python.exe scripts/fix_move_media.py --user-id YOUR_USER_ID
 
 # Delete originals after verification
-.venv\Scripts\python.exe fix_move_media.py --user-id YOUR_USER_ID --delete
+.venv\Scripts\python.exe scripts/fix_move_media.py --user-id YOUR_USER_ID --delete
 ```
 
 ---

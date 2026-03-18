@@ -11,6 +11,10 @@ Met --delete worden ze daarna verwijderd.
 import argparse
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
+
+# Allow imports from the project root (config, etc.)
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import boto3
 from tqdm import tqdm

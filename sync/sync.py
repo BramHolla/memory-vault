@@ -19,6 +19,9 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
+# Allow imports from the project root (config, users_db, etc.)
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 import boto3
 from tqdm import tqdm
 
@@ -127,7 +130,7 @@ def main():
         zip_args = extra
 
     result = subprocess.run(
-        [sys.executable, str(config.BASE_DIR / "downloader.py")] + zip_args,
+        [sys.executable, str(Path(__file__).parent / "downloader.py")] + zip_args,
         check=False,
     )
     if result.returncode != 0:

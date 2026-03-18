@@ -17,6 +17,9 @@ from pathlib import Path
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+# Allow imports from the project root (config, db, etc.)
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 import requests
 from PIL import Image, ImageOps
 from tqdm import tqdm
