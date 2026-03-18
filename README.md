@@ -1,22 +1,56 @@
 # Memory Vault
 
-A self-hosted, multi-user web gallery for your Snapchat memories. Browse, filter, and relive your snaps — privately, with no third-party access to your data.
+> Snapchat wants you to pay for extra storage to keep your old memories. This is the free, self-hosted alternative.
 
-**Stack:** Python Flask · Cloudflare R2 · Fly.io · SQLite · Tailwind CSS · Leaflet.js
+Download your Snapchat data export, run the sync tool once, and your entire memories library lives in your own private gallery — forever, with no subscription and no third-party access to your photos.
+
+![Memory Vault preview](preview.png)
+
+---
+
+## Why this exists
+
+Snapchat introduced paid tiers that limit how many memories you can store. Once you hit the free quota, older snaps become inaccessible unless you subscribe. Memory Vault is the workaround: export your data from Snapchat (**Settings → My Data**), run the included sync tool, and everything is uploaded to your own storage bucket. You own the data, you control it, and the cost is essentially zero.
 
 ---
 
 ## Features
 
-- **Private gallery** — each user sees only their own memories
-- **Infinite scroll** grid with photo and video thumbnails
-- **Lightbox viewer** with keyboard navigation and download button
+Just like Snapchat Memories — but yours:
+
+- **Infinite scroll gallery** — browse all your photos and videos in a fast, responsive grid
+- **Lightbox viewer** — full-size view with keyboard navigation and one-click download
 - **Filters** — date range, year, month, media type (photo/video), location radius
-- **Map view** — memories plotted on an interactive Leaflet map with clustering
-- **Multi-user** — admin panel to invite users, reset passwords, rotate API keys
-- **Per-user language** — each user can switch the UI between English and Dutch
-- **Sync tool** — a standalone `sync.exe` that processes your Snapchat export ZIP and uploads everything to R2
+- **"On this day"** — quick-filter buttons for today, this week, or this month *across all years*
+- **Map view** — every geotagged snap plotted on an interactive map with clustering
+- **Multi-user** — invite friends or family; each user sees only their own memories
+- **Per-user language** — UI switches between English and Dutch per account
+- **Admin panel** — invite users, reset passwords, rotate API keys
+- **Sync tool** — a standalone `sync.exe` that processes your Snapchat export ZIP (no Python required for end users)
 - **Dark theme** with Snapchat yellow accents
+- **Demo mode** — visit `/?demo=true` to preview the UI with placeholder images
+
+---
+
+## Hosting options
+
+### Option A — Free (run it yourself, just for you)
+
+If you only need it for yourself and are comfortable running a local server, you can host Memory Vault on your own machine at no cost whatsoever:
+
+- **Storage:** Cloudflare R2 — free tier (10 GB/month egress, 10 million requests/month)
+- **App:** runs on your laptop or a spare Raspberry Pi (`python app.py`)
+- **Total cost: €0/month**
+
+### Option B — Hosted (a few euros/month, accessible anywhere)
+
+To access your gallery from any device — and to invite friends — deploy the web app to [Fly.io](https://fly.io). Their smallest machine costs around **€1–3/month** and handles multiple users easily.
+
+- **Storage:** Cloudflare R2 (same free tier, or pay-as-you-go cents for large libraries)
+- **App:** Fly.io (shared-cpu-1x, 256 MB RAM)
+- **Total cost: ~€1–3/month**
+
+This is the recommended setup if you want a permanent link you can bookmark and share with friends.
 
 ---
 
@@ -32,7 +66,7 @@ Snapchat export ZIP
   - Uploads media → R2: users/{id}/media/
   - Uploads database → R2: users/{id}/memories.db
        ↓
-  Fly.io (Flask app)
+  Fly.io (Flask app)              ← or localhost for Option A
   - Serves the gallery UI
   - Caches per-user memories.db from R2 (5 min TTL)
   - API: /api/memories, /api/map-points, /api/stats
@@ -48,7 +82,7 @@ Snapchat export ZIP
 
 - Python 3.11+
 - A [Cloudflare account](https://cloudflare.com) with R2 enabled (free tier is sufficient)
-- A [Fly.io account](https://fly.io) (free hobby plan works)
+- A [Fly.io account](https://fly.io) — only needed for Option B (hosted)
 - A Gmail account with [App Password](https://support.google.com/accounts/answer/185833) enabled (for invite emails)
 
 ### 1. Clone and configure
@@ -77,7 +111,15 @@ python -m venv .venv
 .venv/bin/pip install -r requirements.txt        # macOS/Linux
 ```
 
-### 4. Deploy to Fly.io
+### 4a. Run locally — Option A (free)
+
+```bash
+.venv\Scripts\python.exe app.py
+```
+
+Open http://localhost:5000. Your gallery is only accessible on your own machine.
+
+### 4b. Deploy to Fly.io — Option B (hosted, ~€1–3/month)
 
 ```bash
 # Install flyctl: https://fly.io/docs/hands-on/install-flyctl/
@@ -94,28 +136,15 @@ fly deploy
 
 ### 5. Create your admin account
 
-Use the migration script to bootstrap the first user:
-
 ```bash
 .venv\Scripts\python.exe scripts/migrate.py --user-id yourid --email you@example.com --admin
 ```
-
-Or create the users.db manually and upload it to R2 (see `scripts/migrate.py` for reference).
-
-### 6. Run locally (optional)
-
-```bash
-.venv\Scripts\python.exe app.py
-```
-Open http://localhost:5000
 
 ---
 
 ## Demo mode
 
-Visit `/?demo=true` to see the gallery with placeholder images (from [picsum.photos](https://picsum.photos)) instead of your real photos. Useful for screenshots, demos, or sharing the UI without exposing personal content.
-
-A small banner appears at the bottom of the screen while demo mode is active.
+Visit `/?demo=true` on your deployed app to see the gallery with placeholder images instead of your real photos. Useful for screenshots or sharing the UI without exposing personal content.
 
 ---
 
@@ -129,7 +158,7 @@ The sync tool (`sync.py` / `sync.exe`) processes your Snapchat data export and u
 # With Python
 .venv\Scripts\python.exe sync/sync.py --api-key sk_YOUR_KEY "C:\path\to\mydata~*.zip"
 
-# With pre-built binary
+# With pre-built binary (share this with friends — no Python needed)
 sync.exe --api-key sk_YOUR_KEY path\to\mydata~*.zip
 ```
 
@@ -143,13 +172,12 @@ sync.exe --api-key sk_YOUR_KEY path\to\mydata~*.zip
 6. Uploads `memories.db` to `users/{your_id}/memories.db` in R2
 7. Cleans up local files
 
-### Build sync.exe (for sharing)
+### Build sync.exe (for sharing with friends)
 
 ```powershell
 .venv\Scripts\pip.exe install pyinstaller
 .venv\Scripts\pyinstaller.exe --onefile sync/sync.py --name sync --paths .
 # Output: dist\sync.exe
-# --paths . ensures PyInstaller can find config.py and users_db.py at the project root
 ```
 
 ---
