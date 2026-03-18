@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="nl" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Herinneringen</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: { extend: { colors: { snap: { yellow: '#FFFC00' } } } }
+    }
+  </script>
+</head>
+<body class="dark min-h-full bg-gray-950 text-white">
+
+  <!-- Header -->
+  <header class="bg-gray-900 border-b border-gray-800 px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-full bg-snap-yellow flex items-center justify-center">
+        <svg viewBox="0 0 24 24" class="w-5 h-5 fill-black">
+          <path d="M12.166 3c-3.837 0-6.43 2.917-6.43 6.43 0 .604.07 1.186.186 1.742-.27.143-.553.22-.857.22-.44 0-.846-.174-1.15-.46l-.002-.001c-.13-.128-.32-.097-.417.065-.1.167-.053.387.107.493.523.346.87.927.87 1.59 0 .21-.034.412-.097.603-.27.816-.934 1.43-1.762 1.649-.193.05-.33.23-.304.428.026.198.2.342.4.342.017 0 .035 0 .053-.003.28-.04.56-.06.838-.06.56 0 1.05.107 1.45.317.77.41 1.21 1.19 1.37 2.32.025.187.187.325.375.325h.043c.228-.02.453-.03.67-.03.507 0 .99.07 1.437.207.64.196 1.246.583 1.76 1.12.434.46.827.682 1.266.682.44 0 .832-.222 1.267-.683.514-.537 1.12-.924 1.76-1.12.447-.137.93-.207 1.437-.207.217 0 .442.01.67.03h.043c.188 0 .35-.138.375-.325.16-1.13.6-1.91 1.37-2.32.4-.21.89-.317 1.45-.317.278 0 .558.02.838.06.018.003.036.003.053.003.2 0 .374-.144.4-.342.026-.198-.11-.378-.304-.428-.828-.22-1.493-.833-1.762-1.649-.063-.19-.097-.393-.097-.603 0-.663.347-1.244.87-1.59.16-.106.207-.326.107-.493-.097-.162-.287-.193-.417-.065l-.002.001c-.304.286-.71.46-1.15.46-.304 0-.587-.077-.857-.22.116-.556.186-1.138.186-1.742C18.596 5.917 16.003 3 12.166 3z"/>
+        </svg>
+      </div>
+      <span class="font-bold text-snap-yellow">Herinneringen</span>
+      <span class="text-gray-500 text-sm">/ Admin</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="/" class="text-sm text-gray-400 hover:text-white transition">← Terug naar gallery</a>
+      <a href="/logout" class="text-sm text-gray-400 hover:text-white transition">Uitloggen</a>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-6 py-8">
+
+    <!-- Gebruikers tabel -->
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-semibold">Gebruikers ({{ users|length }})</h2>
+      <button onclick="document.getElementById('add-user-modal').classList.remove('hidden')"
+        class="bg-snap-yellow text-black text-sm font-semibold px-4 py-2 rounded-lg hover:bg-yellow-300 transition">
+        + Gebruiker toevoegen
+      </button>
+    </div>
+
+    <div class="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-800 text-gray-400 text-xs uppercase tracking-wide">
+            <th class="px-4 py-3 text-left">ID</th>
+            <th class="px-4 py-3 text-left">E-mail</th>
+            <th class="px-4 py-3 text-left">Herinneringen</th>
+            <th class="px-4 py-3 text-left">Laatste sync</th>
+            <th class="px-4 py-3 text-left">API-key</th>
+            <th class="px-4 py-3 text-left">Admin</th>
+            <th class="px-4 py-3 text-left">Acties</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr class="border-b border-gray-800/50 hover:bg-gray-800/30 transition">
+            <td class="px-4 py-3 font-mono text-snap-yellow">{{ u.id }}</td>
+            <td class="px-4 py-3 text-gray-300">{{ u.email }}</td>
+            <td class="px-4 py-3 text-gray-300">{{ u.memory_count or '—' }}</td>
+            <td class="px-4 py-3 text-gray-400 text-xs">{{ u.last_sync or '—' }}</td>
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-2">
+                <code class="text-xs text-gray-500 font-mono" id="key-{{ u.id }}">{{ u.api_key[:12] }}…</code>
+                <button onclick="copyKey('{{ u.api_key }}', 'key-{{ u.id }}')"
+                  class="text-xs text-gray-400 hover:text-white transition">Kopieer</button>
+              </div>
+            </td>
+            <td class="px-4 py-3 text-gray-400">{{ '✓' if u.is_admin else '' }}</td>
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-2">
+                <form method="POST" action="/admin/users/{{ u.id }}/rotate-key"
+                      onsubmit="return confirm('Nieuwe API-key genereren voor {{ u.id }}?')">
+                  <button class="text-xs text-blue-400 hover:text-blue-300 transition">Nieuwe key</button>
+                </form>
+                <form method="POST" action="/admin/users/{{ u.id }}/reset-password"
+                      onsubmit="return confirm('Reset-mail sturen naar {{ u.email }}?')">
+                  <button class="text-xs text-yellow-400 hover:text-yellow-300 transition">Reset wachtwoord</button>
+                </form>
+                {% if u.id != current_user.id %}
+                <form method="POST" action="/admin/users/{{ u.id }}/delete"
+                      onsubmit="return confirm('Gebruiker {{ u.id }} en alle data verwijderen? Dit kan niet ongedaan worden.')">
+                  <button class="text-xs text-red-400 hover:text-red-300 transition">Verwijderen</button>
+                </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" class="px-4 py-8 text-center text-gray-500">Geen gebruikers gevonden.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Instructies sync -->
+    <div class="mt-8 bg-gray-900 rounded-xl border border-gray-800 p-5">
+      <h3 class="font-semibold mb-3 text-gray-200">Sync-instructies voor gebruikers</h3>
+      <p class="text-sm text-gray-400 mb-2">Deel de volgende stappen en hun persoonlijke API-key:</p>
+      <ol class="text-sm text-gray-400 list-decimal list-inside space-y-1">
+        <li>Download <code class="text-gray-300">sync.exe</code> via de gedeelde link.</li>
+        <li>Open PowerShell en run:</li>
+      </ol>
+      <pre class="mt-2 bg-gray-800 rounded-lg px-4 py-3 text-xs text-gray-300 font-mono overflow-x-auto">sync.exe --api-key &lt;jouw-api-key&gt; pad\naar\mydata~*.zip</pre>
+    </div>
+
+  </main>
+
+  <!-- Modal: gebruiker toevoegen -->
+  <div id="add-user-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+    <div class="bg-gray-900 rounded-xl border border-gray-800 p-6 w-full max-w-sm shadow-2xl">
+      <h3 class="font-semibold text-lg mb-5">Gebruiker toevoegen</h3>
+      <form method="POST" action="/admin/users">
+
+        <label class="block text-sm text-gray-400 mb-1">ID (slug, bijv. annev)</label>
+        <input type="text" name="user_id" required pattern="[a-z0-9]+" title="Alleen kleine letters en cijfers"
+          class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white text-sm
+                 focus:outline-none focus:border-snap-yellow mb-3"
+          placeholder="annev">
+
+        <label class="block text-sm text-gray-400 mb-1">E-mailadres</label>
+        <input type="email" name="email" required
+          class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white text-sm
+                 focus:outline-none focus:border-snap-yellow mb-3"
+          placeholder="naam@voorbeeld.nl">
+
+        <p class="text-xs text-gray-500 mb-4 bg-gray-800/60 rounded-lg px-3 py-2">
+          De gebruiker ontvangt een uitnodigingsmail om zelf een wachtwoord in te stellen.
+        </p>
+
+        <label class="flex items-center gap-2 text-sm text-gray-400 mb-5 cursor-pointer">
+          <input type="checkbox" name="is_admin" value="1" class="rounded">
+          Admin-rechten
+        </label>
+
+        <div class="flex gap-3">
+          <button type="submit"
+            class="flex-1 bg-snap-yellow text-black font-semibold rounded-lg py-2 text-sm hover:bg-yellow-300 transition">
+            Aanmaken & uitnodiging sturen
+          </button>
+          <button type="button"
+            onclick="document.getElementById('add-user-modal').classList.add('hidden')"
+            class="flex-1 bg-gray-800 text-gray-300 font-semibold rounded-lg py-2 text-sm hover:bg-gray-700 transition">
+            Annuleren
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function copyKey(fullKey, elemId) {
+      navigator.clipboard.writeText(fullKey).then(() => {
+        const el = document.getElementById(elemId);
+        const orig = el.textContent;
+        el.textContent = 'Gekopieerd!';
+        el.classList.add('text-snap-yellow');
+        setTimeout(() => {
+          el.textContent = orig;
+          el.classList.remove('text-snap-yellow');
+        }, 1500);
+      });
+    }
+  </script>
+</body>
+</html>

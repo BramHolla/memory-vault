@@ -1,0 +1,126 @@
+/* ── Quick-filter buttons ── */
+.quick-btn {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: 9999px;
+  border: 1px solid #374151;
+  color: #9ca3af;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.quick-btn:hover { background: #1f2937; color: #fff; }
+.quick-btn.active { background: #FFFC00; color: #000; border-color: #FFFC00; }
+
+/* ── Media-type buttons ── */
+.type-btn {
+  background: transparent;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.type-btn:hover { background: #1f2937; color: #fff; }
+.type-btn.active { background: #FFFC00; color: #000; }
+
+/* ── Grid thumbnail ── */
+.thumb {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 4px;
+  cursor: pointer;
+  background: #111827;
+}
+.thumb img,
+.thumb video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.2s;
+  display: block;
+}
+.thumb:hover img,
+.thumb:hover video { transform: scale(1.05); }
+
+.thumb .overlay-info {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 4px 6px 3px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.7));
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.thumb:hover .overlay-info { opacity: 1; }
+
+.thumb .date-label {
+  font-size: 0.6rem;
+  color: #e5e7eb;
+  line-height: 1;
+}
+
+.thumb .video-icon {
+  color: white;
+  opacity: 0.9;
+}
+
+/* Centered play button — always visible on video thumbnails */
+.thumb .play-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.thumb .play-overlay .play-circle {
+  width: 36px;
+  height: 36px;
+  background: rgba(0,0,0,0.55);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(2px);
+  transition: background 0.15s, transform 0.15s;
+}
+.thumb:hover .play-circle {
+  background: rgba(255,252,0,0.85);
+  transform: scale(1.1);
+}
+.thumb:hover .play-circle svg {
+  fill: #000;
+}
+
+.thumb .loc-dot {
+  position: absolute;
+  top: 4px; right: 4px;
+  width: 6px; height: 6px;
+  background: #FFFC00;
+  border-radius: 50%;
+}
+
+/* ── Lightbox media ── */
+#lb-content img {
+  max-width: 100%;
+  max-height: calc(100vh - 80px);
+  object-fit: contain;
+  border-radius: 4px;
+}
+#lb-content video {
+  max-width: 100%;
+  max-height: calc(100vh - 80px);
+  border-radius: 4px;
+}
+
+/* ── Leaflet override for dark theme ── */
+.leaflet-container { background: #111827; }
+.leaflet-popup-content-wrapper {
+  background: #1f2937;
+  color: #f9fafb;
+  border: 1px solid #374151;
+}
+.leaflet-popup-tip { background: #1f2937; }
+.leaflet-popup-content img { border-radius: 4px; }

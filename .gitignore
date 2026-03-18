@@ -1,0 +1,16 @@
+.env
+media/
+memories.db
+__pycache__/
+.venv/
+*.pyc
+*.pyo
+mydata~*.zip
+kladblok.md
+NEXT_SESSION.md
+OVERZICHT.md
+dist/
+build/
+*.spec
+users.db
+.claude/
