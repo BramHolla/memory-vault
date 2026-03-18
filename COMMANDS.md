@@ -1,113 +1,112 @@
-# Memory Vault — Commando's
+# Memory Vault — Commands
 
-## Nieuwe herinneringen toevoegen (jouw eigen sync)
+## Sync new memories
 
 ```powershell
-.venv\Scripts\python.exe sync.py --api-key sk_YOUR_API_KEY_HERE "C:\pad\naar\mydata~*.zip"
+.venv\Scripts\python.exe sync.py --api-key sk_YOUR_API_KEY_HERE "C:\path\to\mydata~*.zip"
 ```
 
-Doet automatisch: ZIP verwerken → user_id instellen → media uploaden naar R2 → database uploaden.
-App toont nieuwe content binnen ~5 minuten.
+Automatically: processes the ZIP → sets user_id → uploads media to R2 → uploads database.
+The app shows new content within ~5 minutes.
 
 ---
 
-## Fly.io — App beheer (`memoryvault`)
+## Fly.io — App management (`memory-vault`)
 
-### Status bekijken
+### View status
 ```powershell
-fly status -a memoryvault
+fly status -a memory-vault
 ```
 
-### Logs bekijken (live)
+### View live logs
 ```powershell
-fly logs -a memoryvault
+fly logs -a memory-vault
 ```
 
-### App herstarten
+### Restart app
 ```powershell
-fly apps restart memoryvault
+fly apps restart memory-vault
 ```
 
-### Nieuwe versie deployen (na code wijzigingen)
+### Deploy new version (after code changes)
 ```powershell
 fly deploy
 ```
 
-### Secrets bekijken (namen, niet waarden)
+### List secrets (names only, not values)
 ```powershell
-fly secrets list -a memoryvault
+fly secrets list -a memory-vault
 ```
 
-### Secret updaten
+### Update a secret
 ```powershell
-fly secrets set GMAIL_APP_PASSWORD="nieuwe_waarde" -a memoryvault
+fly secrets set GMAIL_APP_PASSWORD="new_value" -a memory-vault
 ```
 
-### App openen in browser
+### Open app in browser
 ```powershell
-fly apps open -a memoryvault
+fly apps open -a memory-vault
 ```
-Of ga direct naar: https://memoryvault.fly.dev
 
 ---
 
-## Admin-panel
+## Admin panel
 
-Beheer gebruikers via: **https://memoryvault.fly.dev/admin**
+Manage users at: **https://your-app.fly.dev/admin**
 
-- Gebruiker toevoegen → uitnodigingsmail wordt automatisch verstuurd
-- Reset wachtwoord → reset-mail naar de gebruiker
-- API-key kopiëren → doorgeven voor sync
+- Add user → invitation email is sent automatically
+- Reset password → reset email is sent to the user
+- Copy API key → share with user for sync
 
 ---
 
-## sync.exe bouwen (voor vrienden)
+## Build sync.exe (for sharing with friends)
 
 ```powershell
 .venv\Scripts\pip.exe install pyinstaller
 .venv\Scripts\pyinstaller.exe --onefile sync.py --name sync
 ```
 
-Uitvoer staat in `dist\sync.exe`. Herbouwen is alleen nodig als `sync.py`, `config.py`, `users_db.py` of `downloader.py` verandert.
+Output is in `dist\sync.exe`. Only rebuild if `sync.py`, `config.py`, `users_db.py`, or `downloader.py` changes.
 
-**Instructies voor vriend:**
+**Instructions for the user:**
 ```
-sync.exe --api-key sk_HUNKEY pad\naar\mydata~*.zip
+sync.exe --api-key sk_THEIR_KEY path\to\mydata~*.zip
 ```
 
 ---
 
-## Lokaal draaien (voor testen)
+## Run locally (for development/testing)
 
 ```powershell
 .venv\Scripts\python.exe app.py
 ```
-Ga naar: http://localhost:5000
+Go to: http://localhost:5000
 
 ---
 
-## Eenmalig: foto's verplaatsen (al gedaan)
+## One-time: reorganize media files (already done)
 
 ```powershell
-# Controleer zonder verwijderen
-.venv\Scripts\python.exe fix_move_media.py --user-id bramh
+# Dry run (no deletions)
+.venv\Scripts\python.exe fix_move_media.py --user-id YOUR_USER_ID
 
-# Verwijder originelen na verificatie
-.venv\Scripts\python.exe fix_move_media.py --user-id bramh --delete
+# Delete originals after verification
+.venv\Scripts\python.exe fix_move_media.py --user-id YOUR_USER_ID --delete
 ```
 
 ---
 
-## R2-structuur
+## R2 bucket structure
 
 ```
-snapchat-memories (bucket)
-  users.db                          ← gebruikersdatabase
+your-bucket-name (bucket)
+  users.db                        ← user database
   users/
-    bramh/
-      memories.db                   ← jouw herinneringen-database
-      media/                        ← jouw foto's en video's
-    annev/
+    alice/
+      memories.db                 ← Alice's memories database
+      media/                      ← Alice's photos and videos
+    bob/
       memories.db
       media/
 ```

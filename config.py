@@ -24,7 +24,7 @@ APP_PASSWORD     = os.environ.get("APP_PASSWORD", "")
 FLASK_SECRET_KEY = os.environ.get("FLASK_SECRET_KEY", "dev-insecure-key")
 ADMIN_EMAIL      = os.environ.get("ADMIN_EMAIL", "")
 
-# Gmail SMTP (voor uitnodigingen en wachtwoordresets)
+# Gmail SMTP (for invitations and password resets)
 GMAIL_USER         = os.environ.get("GMAIL_USER", "")
 GMAIL_APP_PASSWORD = os.environ.get("GMAIL_APP_PASSWORD", "")
 

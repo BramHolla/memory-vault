@@ -1,14 +1,14 @@
 """
-Sync Snapchat memories naar de cloud.
-Gebruik: python sync.py --api-key sk_xxx pad/naar/mydata~*.zip
+Sync Snapchat memories to the cloud.
+Usage: python sync.py --api-key sk_xxx path/to/mydata~*.zip
 
-Stappen:
-  1. Valideer API-key tegen users.db in R2 → geeft user_id
-  2. Verwerk ZIP lokaal via downloader.py (media/ + memories.db)
-  3. Voeg user_id toe aan alle records in memories.db
-  4. Upload nieuwe mediabestanden naar users/{user_id}/media/ in R2
-  5. Upload memories.db naar users/{user_id}/memories.db in R2
-  6. App toont nieuwe inhoud binnen 5 minuten
+Steps:
+  1. Validate API key against users.db in R2 → returns user_id
+  2. Process ZIP locally via downloader.py (media/ + memories.db)
+  3. Set user_id on all records in memories.db
+  4. Upload new media files to users/{user_id}/media/ in R2
+  5. Upload memories.db to users/{user_id}/memories.db in R2
+  6. App shows new content within 5 minutes
 """
 
 import argparse
@@ -78,48 +78,48 @@ def upload_file(s3, local_path: Path, key: str) -> bool:
 
 
 def set_user_id_in_db(db_path: Path, user_id: str):
-    """Vul user_id in voor alle records die dat nog niet hebben."""
+    """Populate user_id for all records that don't have it yet."""
     conn = sqlite3.connect(str(db_path))
-    # Voeg kolom toe als die nog niet bestaat (voor bestaande DB's)
+    # Add column if it doesn't exist (for existing databases)
     try:
         conn.execute("ALTER TABLE memories ADD COLUMN user_id TEXT")
         conn.commit()
     except sqlite3.OperationalError:
-        pass  # kolom bestaat al
+        pass  # column already exists
     conn.execute("UPDATE memories SET user_id = ? WHERE user_id IS NULL", (user_id,))
     conn.commit()
     conn.close()
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Sync Snapchat memories naar R2")
-    parser.add_argument("--api-key", required=True, help="Jouw persoonlijke API-key (sk_...)")
+    parser = argparse.ArgumentParser(description="Sync Snapchat memories to R2")
+    parser.add_argument("--api-key", required=True, help="Your personal API key (sk_...)")
     parser.add_argument("zip_path", nargs="?", help="Pad naar mydata~*.zip")
     args, extra = parser.parse_known_args()
 
     if not config.CLOUD_MODE:
-        print("Fout: R2 credentials niet ingesteld. Zet R2_* variabelen in .env")
+        print("Error: R2 credentials not configured. Set R2_* variables in .env")
         sys.exit(1)
 
-    # Stap 1: API-key valideren
-    print("=== Stap 1: API-key valideren ===")
+    # Step 1: Validate API key
+    print("=== Step 1: Validating API key ===")
     s3 = s3_client()
     try:
         users_db_path = users_db.download_users_db(s3)
     except Exception as e:
-        print(f"Fout: kon users.db niet downloaden: {e}")
+        print(f"Error: could not download users.db: {e}")
         sys.exit(1)
 
     user = users_db.get_user_by_api_key(users_db_path, args.api_key)
     if not user:
-        print("Fout: ongeldige API-key.")
+        print("Error: invalid API key.")
         sys.exit(1)
 
     user_id = user["id"]
-    print(f"  Ingelogd als: {user_id}")
+    print(f"  Logged in as: {user_id}")
 
-    # Stap 2: ZIP verwerken via downloader.py
-    print("\n=== Stap 2: ZIP verwerken (lokaal) ===")
+    # Step 2: Process ZIP via downloader.py
+    print("\n=== Step 2: Processing ZIP (locally) ===")
     zip_args = []
     if args.zip_path:
         zip_args = [args.zip_path]
@@ -131,18 +131,18 @@ def main():
         check=False,
     )
     if result.returncode != 0:
-        print(f"Downloader afgesloten met code {result.returncode}. Upload wordt toch geprobeerd.")
+        print(f"Downloader exited with code {result.returncode}. Attempting upload anyway.")
 
-    # Stap 3: user_id instellen in lokale DB
-    print("\n=== Stap 3: user_id instellen in database ===")
+    # Step 3: Set user_id in local database
+    print("\n=== Step 3: Setting user_id in database ===")
     set_user_id_in_db(config.DB_PATH, user_id)
-    print(f"  user_id='{user_id}' ingesteld voor alle records.")
+    print(f"  user_id='{user_id}' set for all records.")
 
-    # Stap 4: Nieuwe bestanden uploaden naar users/{user_id}/media/
-    print(f"\n=== Stap 4: Media uploaden naar users/{user_id}/media/ ===")
+    # Step 4: Upload new files to users/{user_id}/media/
+    print(f"\n=== Step 4: Uploading media to users/{user_id}/media/ ===")
     media_prefix = f"users/{user_id}/media/"
     existing_keys = get_existing_r2_keys(s3, media_prefix)
-    print(f"  {len(existing_keys)} bestanden al in R2")
+    print(f"  {len(existing_keys)} files already in R2")
 
     media_files = [
         f for f in config.MEDIA_DIR.iterdir()
@@ -152,11 +152,11 @@ def main():
     ]
 
     to_upload = [f for f in media_files if f"{media_prefix}{f.name}" not in existing_keys]
-    print(f"  {len(to_upload)} nieuwe bestanden te uploaden")
+    print(f"  {len(to_upload)} new files to upload")
 
     failed = []
     if to_upload:
-        with tqdm(total=len(to_upload), unit="bestand") as pbar:
+        with tqdm(total=len(to_upload), unit="file") as pbar:
             with ThreadPoolExecutor(max_workers=8) as pool:
                 futures = {
                     pool.submit(upload_file, s3, f, f"{media_prefix}{f.name}"): f
@@ -168,40 +168,40 @@ def main():
                     pbar.update(1)
 
         if failed:
-            print(f"  Waarschuwing: {len(failed)} uploads mislukt: {failed[:5]}")
+            print(f"  Warning: {len(failed)} uploads failed: {failed[:5]}")
         else:
-            print(f"  Alle {len(to_upload)} bestanden geüpload.")
+            print(f"  All {len(to_upload)} files uploaded.")
     else:
-        print("  Niets te uploaden.")
+        print("  Nothing to upload.")
 
-    # Stap 5: Database uploaden
-    print(f"\n=== Stap 5: Database uploaden naar users/{user_id}/memories.db ===")
+    # Step 5: Upload database
+    print(f"\n=== Step 5: Uploading database to users/{user_id}/memories.db ===")
     s3.upload_file(
         str(config.DB_PATH),
         config.R2_BUCKET_NAME,
         f"users/{user_id}/memories.db",
         ExtraArgs={"ContentType": "application/x-sqlite3"},
     )
-    print("  memories.db geüpload.")
+    print("  memories.db uploaded.")
 
-    # Stap 6: Lokale bestanden opruimen
-    print("\n=== Stap 6: Lokale bestanden opruimen ===")
+    # Step 6: Clean up local files
+    print("\n=== Step 6: Cleaning up local files ===")
     import shutil
     removed_media = removed_db = 0
     if config.MEDIA_DIR.exists():
         shutil.rmtree(config.MEDIA_DIR)
         removed_media = 1
-        print(f"  media/ verwijderd.")
+        print(f"  media/ removed.")
     if config.DB_PATH.exists():
         config.DB_PATH.unlink()
         removed_db = 1
-        print(f"  memories.db verwijderd.")
+        print(f"  memories.db removed.")
 
-    print("\nSync klaar!")
+    print("\nSync complete!")
     if failed:
-        print(f"  Let op: {len(failed)} mediabestanden zijn niet geüpload.")
-    print("  De app toont de nieuwe inhoud binnen 5 minuten.")
-    print("  Of herstart direct: flyctl restart")
+        print(f"  Note: {len(failed)} media files were not uploaded.")
+    print("  The app will show new content within 5 minutes.")
+    print("  Or restart immediately: flyctl restart")
 
 
 if __name__ == "__main__":

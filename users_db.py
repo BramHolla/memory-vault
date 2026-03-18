@@ -1,5 +1,5 @@
 """
-Gebruikersbeheer via users.db in Cloudflare R2.
+User management via users.db stored in Cloudflare R2.
 """
 
 import secrets
@@ -38,15 +38,15 @@ def download_users_db(s3=None, silent: bool = False) -> Path:
         s3 = _s3()
     tmp = Path(tempfile.mktemp(suffix="_users.db"))
     try:
-        # Gebruik get_object i.p.v. download_file — R2 tokens blokkeren soms
-        # de HeadObject-aanroep die download_file intern doet.
+        # Use get_object instead of download_file — R2 tokens sometimes block
+        # the internal HeadObject call that download_file makes.
         response = s3.get_object(Bucket=config.R2_BUCKET_NAME, Key=USERS_DB_KEY)
         tmp.write_bytes(response["Body"].read())
     except Exception as e:
         if silent:
             _init_users_db(tmp)
         else:
-            raise RuntimeError(f"Kon users.db niet downloaden van R2: {e}") from e
+            raise RuntimeError(f"Could not download users.db from R2: {e}") from e
     return tmp
 
 
@@ -92,7 +92,7 @@ def _get_conn(path: Path) -> sqlite3.Connection:
     conn = sqlite3.connect(str(path))
     conn.row_factory = sqlite3.Row
     conn.executescript(_SCHEMA)
-    # Migreer bestaande DB's met ontbrekende kolommen
+    # Migrate existing databases with missing columns
     for col, defn in [
         ("invite_token",   "TEXT"),
         ("invite_expires", "TEXT"),
@@ -103,8 +103,8 @@ def _get_conn(path: Path) -> sqlite3.Connection:
             conn.execute(f"ALTER TABLE users ADD COLUMN {col} {defn}")
             conn.commit()
         except sqlite3.OperationalError:
-            pass  # kolom bestaat al
-    # Wachtwoord mag NULL zijn (uitgenodigde gebruiker nog niet ingesteld)
+            pass  # column already exists
+    # Password may be NULL (invited user has not yet set a password)
     return conn
 
 
@@ -114,7 +114,7 @@ def _get_conn(path: Path) -> sqlite3.Connection:
 
 def create_user(path: Path, user_id: str, email: str, password: str | None = None,
                 is_admin: bool = False) -> str:
-    """Maak gebruiker aan. Wachtwoord mag None zijn (uitnodiging). Geeft api_key terug."""
+    """Create a user. Password may be None (invite flow). Returns the api_key."""
     api_key = "sk_" + secrets.token_hex(32)
     hashed  = generate_password_hash(password) if password else None
     created = datetime.now(timezone.utc).isoformat()
@@ -157,7 +157,7 @@ def get_user_by_api_key(path: Path, api_key: str) -> dict | None:
 
 
 def get_user_by_token(path: Path, token: str, token_type: str) -> dict | None:
-    """token_type: 'invite' of 'reset'"""
+    """token_type: 'invite' or 'reset'"""
     col_token   = f"{token_type}_token"
     col_expires = f"{token_type}_expires"
     conn = _get_conn(path)
@@ -170,7 +170,7 @@ def get_user_by_token(path: Path, token: str, token_type: str) -> dict | None:
     user = dict(row)
     expires = user.get(col_expires)
     if expires and datetime.fromisoformat(expires) < datetime.now(timezone.utc):
-        return None  # verlopen
+        return None  # expired
     return user
 
 
@@ -237,5 +237,5 @@ def delete_user(path: Path, user_id: str):
 
 def check_password(user: dict, password: str) -> bool:
     if not user.get("password"):
-        return False  # nog geen wachtwoord ingesteld (uitnodiging niet geaccepteerd)
+        return False  # password not yet set (invite not yet accepted)
     return check_password_hash(user["password"], password)

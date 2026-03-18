@@ -168,7 +168,7 @@ def write_video_metadata(path: Path, date_str: str, lat: float | None, lon: floa
 
 
 def _ffmpeg_binary() -> str:
-    """Geeft pad naar ffmpeg, ook als het niet in PATH staat (via imageio-ffmpeg)."""
+    """Returns path to ffmpeg, including when it is not in PATH (via imageio-ffmpeg)."""
     try:
         subprocess.run(["ffmpeg", "-version"], capture_output=True, timeout=5)
         return "ffmpeg"
@@ -178,7 +178,7 @@ def _ffmpeg_binary() -> str:
         import imageio_ffmpeg
         return imageio_ffmpeg.get_ffmpeg_exe()
     except Exception:
-        return "ffmpeg"  # fallback, zal falen
+        return "ffmpeg"  # fallback, will fail if not installed
 
 
 def generate_poster(video_path: Path, poster_path: Path) -> bool:
@@ -361,20 +361,20 @@ def main():
     else:
         candidates = list(config.BASE_DIR.glob("mydata~*.zip"))
         if not candidates:
-            print("Error: geen mydata~*.zip gevonden. Geef het pad als argument mee.")
+            print("Error: no mydata~*.zip found. Pass the path as an argument.")
             sys.exit(1)
         zip_path = candidates[0]
-        print(f"Zip gevonden: {zip_path.name}")
+        print(f"Found zip: {zip_path.name}")
 
     if not zip_path.exists():
-        print(f"Error: {zip_path} bestaat niet.")
+        print(f"Error: {zip_path} does not exist.")
         sys.exit(1)
 
     config.MEDIA_DIR.mkdir(exist_ok=True)
     db.init_db()
 
-    # --- Fase 1: Extract zip ---
-    print("Zip uitpakken...")
+    # --- Phase 1: Extract zip ---
+    print("Extracting zip...")
     raw_dir = config.MEDIA_DIR / "_raw"
     raw_dir.mkdir(exist_ok=True)
 
@@ -389,12 +389,12 @@ def main():
         except KeyError:
             candidates = [n for n in zf.namelist() if n.endswith("memories_history.json")]
             if not candidates:
-                print("Error: memories_history.json niet gevonden in zip.")
+                print("Error: memories_history.json not found in zip.")
                 sys.exit(1)
             json_bytes = zf.read(candidates[0])
 
         entries = json.loads(json_bytes).get("Saved Media", [])
-        print(f"{len(entries)} herinneringen gevonden in JSON")
+        print(f"{len(entries)} memories found in JSON")
 
         # Extract media files; group by UUID found in filename
         skip_prefixes = ("html/", "json/", "._")
@@ -438,7 +438,7 @@ def main():
             raw_groups.setdefault(dp, []).append(grp)
 
     total_raw = sum(len(v) for v in raw_groups.values())
-    print(f"{total_raw} mediagroepen uitgepakt uit zip")
+    print(f"{total_raw} media groups extracted from zip")
 
     # --- Check what's already imported ---
     conn_check = db.get_connection()
@@ -452,13 +452,13 @@ def main():
         if make_entry_id(e.get("Media Download Url", "") or e["Date"]) not in existing
     ]
 
-    print(f"{len(existing)} al geïmporteerd, {len(to_process)} te verwerken")
+    print(f"{len(existing)} already imported, {len(to_process)} to process")
 
     if not to_process:
-        print("Niets te doen — alles al geïmporteerd.")
+        print("Nothing to do — all memories already imported.")
         return
 
-    # --- Fase 2: Process entries in parallel ---
+    # --- Phase 2: Process entries in parallel ---
     session = requests.Session()
     session.headers["User-Agent"] = "Mozilla/5.0"
 
@@ -469,7 +469,7 @@ def main():
     used_lock = threading.Lock()
     used_set: set = set()
 
-    with tqdm(total=len(to_process), unit="herinnering") as pbar:
+    with tqdm(total=len(to_process), unit="memory") as pbar:
         with ThreadPoolExecutor(max_workers=config.MAX_WORKERS) as pool:
             futures = {
                 pool.submit(process_entry, e, raw_groups, session, used_lock, used_set): e
@@ -487,16 +487,16 @@ def main():
                         failed_count += 1
                 except Exception as exc:
                     failed_count += 1
-                    tqdm.write(f"  Fout: {exc}")
+                    tqdm.write(f"  Error: {exc}")
                 finally:
                     pbar.update(1)
 
-    print(f"\nKlaar: {success_count} geïmporteerd, {failed_count} mislukt")
+    print(f"\nDone: {success_count} imported, {failed_count} failed")
 
     stats = db.get_stats()
-    print(f"Database: {stats['total']} totaal "
-          f"({stats['images']} foto's, {stats['videos']} video's, "
-          f"{stats['with_gps']} met locatie)")
+    print(f"Database: {stats['total']} total "
+          f"({stats['images']} photos, {stats['videos']} videos, "
+          f"{stats['with_gps']} with location)")
 
 
 if __name__ == "__main__":

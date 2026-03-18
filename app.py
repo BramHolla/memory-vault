@@ -1,6 +1,6 @@
 """
-Snapchat Memories Viewer — multi-user
-Usage: gunicorn app:app  (productie) of  python app.py  (dev)
+Memory Vault — multi-user Snapchat memories gallery
+Usage: gunicorn app:app  (production) or  python app.py  (dev)
 """
 
 import tempfile
@@ -50,13 +50,13 @@ def load_user(user_id: str):
 
 
 # ---------------------------------------------------------------------------
-# users.db cache (download van R2, refresh elke 5 min)
+# users.db cache (downloaded from R2, refreshed every 5 min)
 # ---------------------------------------------------------------------------
 
 _users_db_path: Path | None = None
 _users_db_lock  = threading.Lock()
 _users_db_last_refresh = 0.0
-USERS_DB_REFRESH = 300  # seconden
+USERS_DB_REFRESH = 300  # seconds
 
 
 def _get_users_db_path() -> Path | None:
@@ -77,12 +77,12 @@ def _get_users_db_path() -> Path | None:
                     except Exception:
                         pass
             except Exception as e:
-                app.logger.warning(f"users.db refresh mislukt: {e}")
+                app.logger.warning(f"users.db refresh failed: {e}")
     return _users_db_path
 
 
 def _invalidate_users_db_cache():
-    """Forceer herdownload bij volgende request (na schrijfoperatie)."""
+    """Force re-download on next request (after a write operation)."""
     global _users_db_last_refresh
     with _users_db_lock:
         _users_db_last_refresh = 0.0
@@ -126,8 +126,8 @@ def get_user_db(user_id: str) -> Path | None:
                         pass
                 return tmp
             except Exception as e:
-                app.logger.warning(f"memories.db download mislukt voor {user_id}: {e}")
-                return cached_path  # gebruik stale cache als fallback
+                app.logger.warning(f"memories.db download failed for {user_id}: {e}")
+                return cached_path  # fall back to stale cache
         return cached_path
 
 
@@ -154,7 +154,7 @@ def login():
         if user_data and users_db.check_password(user_data, password):
             login_user(User(user_data), remember=True)
             return redirect(url_for("index"))
-        error = "Onbekend e-mailadres of verkeerd wachtwoord."
+        error = "Unknown email address or incorrect password."
     return render_template("login.html", error=error)
 
 
@@ -224,7 +224,7 @@ def api_stats():
 
 
 # ---------------------------------------------------------------------------
-# Media serving (lokale modus)
+# Media serving (local mode)
 # ---------------------------------------------------------------------------
 
 @app.route("/media/<path:filename>")
@@ -242,19 +242,19 @@ def accept_invite(token: str):
     path = _get_users_db_path()
     user = users_db.get_user_by_token(path, token, "invite") if path else None
     if not user:
-        return render_template("set_password.html", error="Deze link is ongeldig of verlopen.", token=None, mode="invite")
+        return render_template("set_password.html", error="This link is invalid or has expired.", token=None, mode="invite")
 
     if request.method == "POST":
         pw  = request.form.get("password", "")
         pw2 = request.form.get("password2", "")
         if len(pw) < 8:
-            return render_template("set_password.html", error="Wachtwoord moet minimaal 8 tekens zijn.", token=token, mode="invite")
+            return render_template("set_password.html", error="Password must be at least 8 characters.", token=token, mode="invite")
         if pw != pw2:
-            return render_template("set_password.html", error="Wachtwoorden komen niet overeen.", token=token, mode="invite")
+            return render_template("set_password.html", error="Passwords do not match.", token=token, mode="invite")
         users_db.set_password(path, user["id"], pw)
         users_db.upload_users_db(path)
         _invalidate_users_db_cache()
-        # Herlaad user en log in
+        # Reload user and log in
         fresh_path = _get_users_db_path()
         fresh_user = users_db.get_user_by_id(fresh_path, user["id"])
         login_user(User(fresh_user), remember=True)
@@ -268,15 +268,15 @@ def reset_password(token: str):
     path = _get_users_db_path()
     user = users_db.get_user_by_token(path, token, "reset") if path else None
     if not user:
-        return render_template("set_password.html", error="Deze link is ongeldig of verlopen.", token=None, mode="reset")
+        return render_template("set_password.html", error="This link is invalid or has expired.", token=None, mode="reset")
 
     if request.method == "POST":
         pw  = request.form.get("password", "")
         pw2 = request.form.get("password2", "")
         if len(pw) < 8:
-            return render_template("set_password.html", error="Wachtwoord moet minimaal 8 tekens zijn.", token=token, mode="reset")
+            return render_template("set_password.html", error="Password must be at least 8 characters.", token=token, mode="reset")
         if pw != pw2:
-            return render_template("set_password.html", error="Wachtwoorden komen niet overeen.", token=token, mode="reset")
+            return render_template("set_password.html", error="Passwords do not match.", token=token, mode="reset")
         users_db.set_password(path, user["id"], pw)
         users_db.upload_users_db(path)
         _invalidate_users_db_cache()
@@ -306,7 +306,7 @@ def admin():
     path = _get_users_db_path()
     users = users_db.list_users(path) if path else []
 
-    # Haal aantal memories + laatste sync-tijd op per gebruiker
+    # Fetch memory count and last sync time per user
     s3 = boto3.client(
         "s3",
         endpoint_url=config.R2_ENDPOINT,
@@ -325,7 +325,7 @@ def admin():
                     Key=f"users/{u['id']}/memories.db",
                 )
                 u["last_sync"] = resp["LastModified"].strftime("%Y-%m-%d %H:%M UTC")
-                # Tel memories via cached db
+                # Count memories via cached db
                 cached = _user_db_cache.get(u["id"])
                 if cached and cached[0] and cached[0].exists():
                     u["memory_count"] = db.count_memories_for_user(cached[0], u["id"])
@@ -355,9 +355,9 @@ def admin_create_user():
         try:
             mailer.send_invite(email, user_id, token)
         except Exception as e:
-            app.logger.warning(f"Uitnodigingsmail mislukt: {e}")
+            app.logger.warning(f"Invite email failed: {e}")
     except Exception as e:
-        app.logger.error(f"Gebruiker aanmaken mislukt: {e}")
+        app.logger.error(f"Failed to create user: {e}")
         abort(500)
 
     return redirect(url_for("admin"))
@@ -388,7 +388,7 @@ def admin_reset_password(user_id: str):
     try:
         mailer.send_password_reset(user["email"], user["id"], token)
     except Exception as e:
-        app.logger.warning(f"Reset-mail mislukt: {e}")
+        app.logger.warning(f"Password reset email failed: {e}")
     return redirect(url_for("admin"))
 
 
@@ -397,14 +397,14 @@ def admin_reset_password(user_id: str):
 @admin_required
 def admin_delete_user(user_id: str):
     if user_id == current_user.id:
-        abort(400)  # jezelf niet verwijderen
+        abort(400)  # cannot delete yourself
 
     path = _get_users_db_path()
     users_db.delete_user(path, user_id)
     users_db.upload_users_db(path)
     _invalidate_users_db_cache()
 
-    # Verwijder R2-data van de gebruiker
+    # Delete the user's R2 data
     if config.CLOUD_MODE:
         try:
             s3 = boto3.client(
@@ -419,7 +419,7 @@ def admin_delete_user(user_id: str):
                 for obj in page.get("Contents", []):
                     s3.delete_object(Bucket=config.R2_BUCKET_NAME, Key=obj["Key"])
         except Exception as e:
-            app.logger.warning(f"R2-data verwijderen mislukt voor {user_id}: {e}")
+            app.logger.warning(f"Failed to delete R2 data for {user_id}: {e}")
 
     return redirect(url_for("admin"))
 
@@ -430,16 +430,16 @@ def admin_delete_user(user_id: str):
 
 if __name__ == "__main__":
     if config.CLOUD_MODE:
-        print("Cloud modus: users.db downloaden...")
+        print("Cloud mode: downloading users.db...")
         try:
             p = users_db.download_users_db(silent=True)
             _users_db_path = p
             _users_db_last_refresh = time.time()
-            print("users.db geladen.")
+            print("users.db loaded.")
         except Exception as e:
-            print(f"Waarschuwing: users.db niet geladen: {e}")
+            print(f"Warning: users.db not loaded: {e}")
     else:
         db.init_db()
 
-    print("Snapchat Memories Viewer draait op http://localhost:5000")
+    print("Memory Vault running at http://localhost:5000")
     app.run(host="127.0.0.1", port=5000, debug=False)

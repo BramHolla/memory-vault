@@ -41,11 +41,11 @@ def init_db():
                 ON memories(latitude, longitude)
                 WHERE latitude IS NOT NULL;
         """)
-        # Migreer bestaande DB's zonder user_id kolom
+        # Migrate existing databases without user_id column
         try:
             conn.execute("ALTER TABLE memories ADD COLUMN user_id TEXT")
         except sqlite3.OperationalError:
-            pass  # kolom bestaat al
+            pass  # column already exists
         conn.executescript("""
             CREATE INDEX IF NOT EXISTS idx_user_id
                 ON memories(user_id);
@@ -76,7 +76,7 @@ def query_memories(filters: dict, user_id: str) -> list[dict]:
     if filters.get("date_to"):
         conditions.append("date_utc <= ?")
         params.append(filters["date_to"] + "T23:59:59")
-    # Cross-year filters (bijv. "18 maart in elk jaar")
+    # Cross-year filters (e.g. "March 18 in every year")
     if filters.get("month_day_from") and filters.get("month_day_to"):
         conditions.append("strftime('%m-%d', date_utc) BETWEEN ? AND ?")
         params.extend([filters["month_day_from"], filters["month_day_to"]])
@@ -163,7 +163,7 @@ def get_stats(user_id: str | None = None) -> dict:
 
 
 def count_memories_for_user(db_path, user_id: str) -> int:
-    """Gebruik een specifiek db-pad (voor admin-overzicht per user)."""
+    """Use a specific db path (for admin overview per user)."""
     try:
         conn = sqlite3.connect(str(db_path))
         count = conn.execute(

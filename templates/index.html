@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="nl" class="h-full">
+<html lang="en" class="h-full">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Snapchat Herinneringen</title>
+  <title>Memory Vault</title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -35,7 +35,7 @@
             <path d="M12.166 3c-3.837 0-6.43 2.917-6.43 6.43 0 .604.07 1.186.186 1.742-.27.143-.553.22-.857.22-.44 0-.846-.174-1.15-.46l-.002-.001c-.13-.128-.32-.097-.417.065-.1.167-.053.387.107.493.523.346.87.927.87 1.59 0 .21-.034.412-.097.603-.27.816-.934 1.43-1.762 1.649-.193.05-.33.23-.304.428.026.198.2.342.4.342.017 0 .035 0 .053-.003.28-.04.56-.06.838-.06.56 0 1.05.107 1.45.317.77.41 1.21 1.19 1.37 2.32.025.187.187.325.375.325h.043c.228-.02.453-.03.67-.03.507 0 .99.07 1.437.207.64.196 1.246.583 1.76 1.12.434.46.827.682 1.266.682.44 0 .832-.222 1.267-.683.514-.537 1.12-.924 1.76-1.12.447-.137.93-.207 1.437-.207.217 0 .442.01.67.03h.043c.188 0 .35-.138.375-.325.16-1.13.6-1.91 1.37-2.32.4-.21.89-.317 1.45-.317.278 0 .558.02.838.06.018.003.036.003.053.003.2 0 .374-.144.4-.342.026-.198-.11-.378-.304-.428-.828-.22-1.493-.833-1.762-1.649-.063-.19-.097-.393-.097-.603 0-.663.347-1.244.87-1.59.16-.106.207-.326.107-.493-.097-.162-.287-.193-.417-.065l-.002.001c-.304.286-.71.46-1.15.46-.304 0-.587-.077-.857-.22.116-.556.186-1.138.186-1.742C18.596 5.917 16.003 3 12.166 3z"/>
           </svg>
         </div>
-        <span class="font-bold text-snap-yellow text-lg hidden sm:block">Herinneringen</span>
+        <span class="font-bold text-snap-yellow text-lg hidden sm:block">Memory Vault</span>
       </div>
 
       <!-- Stats badge -->
@@ -45,32 +45,32 @@
 
       <!-- Media type filter -->
       <div class="flex rounded-lg overflow-hidden border border-gray-700 text-sm">
-        <button onclick="setMediaType('')"   id="btn-all"   class="type-btn active px-3 py-1.5">Alles</button>
-        <button onclick="setMediaType('image')"  id="btn-image" class="type-btn px-3 py-1.5">Foto's</button>
-        <button onclick="setMediaType('video')"  id="btn-video" class="type-btn px-3 py-1.5">Video's</button>
+        <button onclick="setMediaType('')"   id="btn-all"   class="type-btn active px-3 py-1.5">All</button>
+        <button onclick="setMediaType('image')"  id="btn-image" class="type-btn px-3 py-1.5">Photos</button>
+        <button onclick="setMediaType('video')"  id="btn-video" class="type-btn px-3 py-1.5">Videos</button>
       </div>
 
       <!-- Date from -->
-      <input type="date" id="date-from" placeholder="Van"
+      <input type="date" id="date-from" placeholder="From"
         class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-snap-yellow text-white"
         onchange="applyFilters()">
 
       <!-- Date to -->
-      <input type="date" id="date-to" placeholder="Tot"
+      <input type="date" id="date-to" placeholder="To"
         class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-snap-yellow text-white"
         onchange="applyFilters()">
 
       <!-- Clear filters -->
       <button onclick="clearFilters()"
         class="text-xs text-gray-400 hover:text-white px-2 py-1.5 rounded-lg hover:bg-gray-800 transition">
-        Wis filters
+        Clear filters
       </button>
 
       <!-- Map toggle -->
       <button onclick="toggleMap()" id="map-toggle"
         class="bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg px-3 py-1.5 text-sm transition flex items-center gap-1.5">
         <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current"><path d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z"/></svg>
-        Kaart
+        Map
       </button>
 
       <!-- User menu -->
@@ -84,21 +84,21 @@
         <span class="text-xs text-gray-500 hidden sm:block">{{ current_user.id }}</span>
         <a href="/logout"
           class="text-xs text-gray-400 hover:text-white px-2 py-1.5 rounded-lg hover:bg-gray-800 transition">
-          Uitloggen
+          Sign out
         </a>
       </div>
     </div>
 
-    <!-- Quick date filters + jaar dropdown -->
+    <!-- Quick date filters + year dropdown -->
     <div class="flex gap-2 mt-2 flex-wrap items-center">
-      <span class="text-xs text-gray-500">Snel:</span>
-      <button onclick="setQuickDate('today')"     class="quick-btn">Vandaag</button>
-      <button onclick="setQuickDate('week')"      class="quick-btn">Deze week</button>
-      <button onclick="setQuickDate('month')"     class="quick-btn">Deze maand</button>
+      <span class="text-xs text-gray-500">Quick:</span>
+      <button onclick="setQuickDate('today')"     class="quick-btn">Today</button>
+      <button onclick="setQuickDate('week')"      class="quick-btn">This week</button>
+      <button onclick="setQuickDate('month')"     class="quick-btn">This month</button>
 
       <span class="text-gray-700 text-xs hidden sm:block">|</span>
 
-      <!-- Jaar navigator -->
+      <!-- Year navigator -->
       <div class="flex items-center gap-1">
         <button id="year-prev" onclick="navYear(-1)"
           class="w-6 h-6 flex items-center justify-center rounded bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-400 hover:text-white transition disabled:opacity-30 disabled:cursor-not-allowed text-sm">
@@ -106,7 +106,7 @@
         </button>
         <select id="year-select" onchange="setYearFromSelect()"
           class="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm text-white focus:outline-none focus:border-snap-yellow">
-          <option value="">Alle jaren</option>
+          <option value="">All years</option>
         </select>
         <button id="year-next" onclick="navYear(1)"
           class="w-6 h-6 flex items-center justify-center rounded bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-400 hover:text-white transition disabled:opacity-30 disabled:cursor-not-allowed text-sm">
@@ -127,8 +127,8 @@
         <svg class="animate-spin w-6 h-6 mx-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="4" class="opacity-25"/><path d="M4 12a8 8 0 018-8" stroke-width="4" class="opacity-75"/></svg>
       </div>
       <div id="empty" class="text-center py-16 text-gray-500 hidden">
-        <p class="text-lg">Geen herinneringen gevonden</p>
-        <p class="text-sm mt-1">Pas de filters aan om meer te zien</p>
+        <p class="text-lg">No memories found</p>
+        <p class="text-sm mt-1">Adjust the filters to see more</p>
       </div>
       <div id="sentinel" class="h-4"></div>
     </div>
